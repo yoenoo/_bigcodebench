@@ -1,0 +1,2 @@
+- [ ] replace with parse_fn in vllm_engine.py (should be kept as general utils) -> generate.py
+- [ ] test with multiple GPUs
