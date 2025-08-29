@@ -1,2 +1,3 @@
 - [ ] replace with parse_fn in vllm_engine.py (should be kept as general utils) -> generate.py
-- [ ] test with multiple GPUs
+- [x] test with multiple GPUs
+- [ ] add <answer> tag for format validation

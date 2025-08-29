@@ -24,7 +24,7 @@ from vllm_engine import run_batch_inference, init_engine
 
 target_path = "bcb_results/Qwen--Qwen3-14B--main--bigcodebench-complete--vllm-1.0-1-sanitized_calibrated_eval_results.jsonl"
 
-engine = init_engine(model, dtype="bfloat16")
+engine = init_engine(model, tensor_parallel_size=4, dtype="bfloat16")
 
 samples = asyncio.run(run_batch_inference(
   engine,
