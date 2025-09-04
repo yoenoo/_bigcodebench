@@ -1,11 +1,12 @@
 from typing import Any, Dict, Optional
 from bigcodebench.eval import untrusted_check, PASS
+from collections import defaultdict
+from tqdm import tqdm
 
 def evaluate_single_sample(
     sample: Dict[str, Any],
     problems: Dict[str, Dict[str, Any]],
     expected_time: Dict[str, Optional[float]],
-    *,
     calibrated: bool = True,
     max_as_limit: int = 30 * 1024,
     max_data_limit: int = 30 * 1024,
@@ -58,8 +59,8 @@ def evaluate_single_sample(
 
     # Run sandboxed check
     status, details = untrusted_check(
-        solution=solution,
-        test=problem["test"],
+        code=solution,
+        test_code=problem["test"],
         entry_point=problem["entry_point"],
         max_as_limit=max_as_limit,
         max_data_limit=max_data_limit,
@@ -79,14 +80,27 @@ def evaluate_single_sample(
 
 
 if __name__ == "__main__":
-  from bigcodebench.eval import get_bigcodebench, load_solutions
+  from bigcodebench.data import get_bigcodebench, load_solutions
 
   target_path = "bcb_results/Qwen--Qwen3-14B--main--bigcodebench-complete--vllm-1.0-1-sanitized_calibrated_eval_results.jsonl"
   problems = get_bigcodebench(subset="full")
-  sample = next(iter(load_solutions(target_path)))
-  print(sample)
-  rec = evaluate_single_sample(sample, problems, {}, calibrated=True)
-  print(rec)
-  # print(rec["task_id"], rec["status"])
 
-  ## TODO: evals in parallel
+  results = defaultdict(list)
+  for sample in tqdm(load_solutions(target_path), total=10*2):
+    # print(sample)
+    rec = evaluate_single_sample(sample, problems, {}, calibrated=True)
+    task_id = rec["task_id"]
+    status = rec["status"]
+    details = rec["details"]
+
+    if status not in ["pass", "fail"]:
+      raise ValueError(f"Unknown status: {status}")
+
+    status_id = 1 if status == "pass" else 0
+    results[task_id].append(status_id)
+
+  pass_at_n = defaultdict(list)
+  for task_id, status_list in results.items():
+    pass_at_n[task_id] = max(status_list) ## pass@n 
+
+  print(pass_at_n)
